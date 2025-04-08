@@ -7,20 +7,21 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Jalankan migrasi.
      */
     public function up(): void
     {
         Schema::create('students', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 4); // Nama max 4 karakter
-            $table->string('nisn')->unique(); // NISN unik untuk tiap siswa
+            $table->string('name', 4); // Nama maksimal 4 karakter
+            $table->string('nis')->unique(); // Nomor Induk Siswa unik
+            $table->enum('status', ['aktif', 'keluar', 'dikeluarkan'])->default('aktif');
             $table->timestamps();
         });
     }
 
     /**
-     * Reverse the migrations.
+     * Rollback migrasi.
      */
     public function down(): void
     {
