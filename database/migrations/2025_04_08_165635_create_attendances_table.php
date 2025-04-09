@@ -6,40 +6,40 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
 
-            // Relasi ke tabel students
+            // Foreign key ke tabel students
             $table->unsignedBigInteger('student_id');
 
             // Tanggal kehadiran
             $table->date('date');
 
-            // Status: hadir, sakit, izin, alfa
+            // Status kehadiran
             $table->enum('status', ['hadir', 'sakit', 'izin', 'alfa']);
 
-            // Foreign key ke absence_reasons (optional, hanya diisi kalau sakit/izin/alfa)
+            // Foreign key alasan absen (nullable kalau status hadir)
             $table->unsignedBigInteger('absence_reason_id')->nullable();
 
+            // Timestamps
             $table->timestamps();
 
-            // Foreign key constraint
-            $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
-            $table->foreign('absence_reason_id')->references('id')->on('absence_reasons')->onDelete('set null');
+            // Constraints
+            $table->foreign('student_id')
+                ->references('id')->on('students')
+                ->onDelete('cascade');
 
-            // Unik: satu siswa tidak bisa dua kali absen di hari yang sama
+            $table->foreign('absence_reason_id')
+                ->references('id')->on('absence_reasons')
+                ->onDelete('set null');
+
+            // Satu siswa tidak bisa absen dua kali dalam 1 hari
             $table->unique(['student_id', 'date']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('attendances');

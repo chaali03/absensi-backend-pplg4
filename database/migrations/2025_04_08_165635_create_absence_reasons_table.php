@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('absence_reasons', function (Blueprint $table) {
             $table->id();
-            $table->string('reason'); // Contoh: Sakit, Izin, Alfa
+            $table->string('reason')->unique(); // Contoh: Sakit, Izin, Tanpa Keterangan
+            $table->text('description')->nullable(); // Penjelasan tambahan jika diperlukan
             $table->timestamps();
         });
     }
