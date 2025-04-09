@@ -18,7 +18,11 @@ Route::middleware(['auth:sanctum', 'role:secretary'])->prefix('secretary')->grou
     Route::put('/students/{id}', [SecretaryController::class, 'update']); // Edit siswa
     Route::delete('/students/{id}', [SecretaryController::class, 'destroy']); // Hapus siswa
     Route::post('/mark-attendance', [SecretaryController::class, 'markAttendance']); // Tandai kehadiran
+
+    // ✅ Import data absensi via Excel
+    Route::post('/import-attendance', [SecretaryController::class, 'importAttendance']);
 });
+
 
 // ✅ Group route untuk Student
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group(function () {
