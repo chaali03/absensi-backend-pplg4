@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\Attendance;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\AttendanceImport;
 
 class SecretaryController extends Controller
 {
@@ -63,5 +65,17 @@ class SecretaryController extends Controller
         );
 
         return response()->json($attendance);
+    }
+
+    // ✅ Import absensi dari file Excel
+    public function importAttendance(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        Excel::import(new AttendanceImport, $request->file('file'));
+
+        return response()->json(['message' => 'Data absensi berhasil diimpor.']);
     }
 }
