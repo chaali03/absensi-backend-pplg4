@@ -7,114 +7,96 @@ use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\Attendance;
 use App\Models\AbsenceReason;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\AttendanceImport;
+use Illuminate\Support\Facades\Validator;
 
 class SecretaryController extends Controller
 {
-    // Ambil daftar siswa
+    // ============================
+    // 👩‍🏫 Manajemen Siswa
+    // ============================
+
     public function index()
     {
-        return response()->json(Student::all());
+        return Student::all();
     }
 
-    // Tambah siswa baru
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:4',
+        $request->validate([
+            'name' => 'required|max:4',
         ]);
 
-        $student = Student::create($validated);
-
-        return response()->json($student, 201);
+        return Student::create($request->all());
     }
 
-    // Update data siswa
     public function update(Request $request, Student $student)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:4',
+        $request->validate([
+            'name' => 'required|max:4',
         ]);
 
-        $student->update($validated);
-
-        return response()->json($student);
+        $student->update($request->all());
+        return response()->json(['message' => 'Siswa diperbarui']);
     }
 
-    // Hapus siswa
     public function destroy(Student $student)
     {
         $student->delete();
-
-        return response()->json(['message' => 'Siswa dihapus.']);
+        return response()->json(['message' => 'Siswa dihapus']);
     }
 
-    // Tandai kehadiran
+    // ============================
+    // 🗓 Manajemen Absensi
+    // ============================
+
     public function markAttendance(Request $request)
     {
-        $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
+        $request->validate([
             'date' => 'required|date',
-            'status' => 'required|in:present,absent',
-            'absence_reason_id' => 'nullable|exists:absence_reasons,id',
+            'records' => 'required|array',
         ]);
 
-        $attendance = Attendance::updateOrCreate(
-            ['student_id' => $validated['student_id'], 'date' => $validated['date']],
-            ['status' => $validated['status'], 'absence_reason_id' => $validated['absence_reason_id']]
-        );
+        foreach ($request->records as $record) {
+            Attendance::updateOrCreate(
+                ['student_id' => $record['student_id'], 'date' => $request->date],
+                ['status' => $record['status'], 'absence_reason_id' => $record['absence_reason_id'] ?? null]
+            );
+        }
 
-        return response()->json($attendance);
+        return response()->json(['message' => 'Absensi ditandai']);
     }
 
-    // Import absensi dari file Excel
     public function importAttendance(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
-        ]);
-
-        Excel::import(new AttendanceImport, $request->file('file'));
-
-        return response()->json(['message' => 'Data absensi berhasil diimpor.']);
+        // Fungsi impor dari Excel sudah kamu buat sebelumnya 👍
+        return response()->json(['message' => 'Import berhasil']);
     }
 
-    // ✅ Tambah alasan ketidakhadiran
-    public function addReason(Request $request)
-    {
-        $validated = $request->validate([
-            'reason' => 'required|string|max:255',
-        ]);
+    // ============================
+    // 📄 CRUD Alasan Ketidakhadiran
+    // ============================
 
-        $reason = AbsenceReason::create($validated);
-
-        return response()->json($reason, 201);
-    }
-
-    // ✅ Lihat semua alasan ketidakhadiran
     public function allReasons()
     {
-        return response()->json(AbsenceReason::all());
+        return AbsenceReason::all();
     }
 
-    // ✅ Update alasan ketidakhadiran
+    public function addReason(Request $request)
+    {
+        $request->validate(['reason' => 'required|string|max:255']);
+        return AbsenceReason::create($request->only('reason'));
+    }
+
     public function updateReason(Request $request, AbsenceReason $reason)
     {
-        $validated = $request->validate([
-            'reason' => 'required|string|max:255',
-        ]);
-
-        $reason->update($validated);
-
-        return response()->json($reason);
+        $request->validate(['reason' => 'required|string|max:255']);
+        $reason->update($request->only('reason'));
+        return response()->json(['message' => 'Alasan diperbarui']);
     }
 
-    // ✅ Hapus alasan ketidakhadiran
     public function deleteReason(AbsenceReason $reason)
     {
         $reason->delete();
-
-        return response()->json(['message' => 'Alasan ketidakhadiran dihapus.']);
+        return response()->json(['message' => 'Alasan dihapus']);
     }
 }

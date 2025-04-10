@@ -5,88 +5,71 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
-use Carbon\Carbon;
-use App\Exports\AttendanceExport;
+use App\Models\Student;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AttendanceExport;
 
 class TeacherController extends Controller
 {
     /**
-     * 📊 Ringkasan kehadiran berdasarkan tipe: day, week, month, semester
+     * Ringkasan kehadiran: by semester, bulan, minggu, hari
+     * GET /api/teacher/summary?type=semester&date=2025-01-01
      */
     public function summary(Request $request)
     {
-        $type = $request->query('type', 'day'); // default: day
-        $date = Carbon::parse($request->query('date', now()));
+        $type = $request->query('type', 'semester'); // semester, month, week, day
+        $date = $request->query('date', now()->toDateString());
 
-        // Hitung rentang waktu berdasarkan jenis summary
+        $query = Attendance::select('student_id', 'status', 'date')
+            ->with('student');
+
         switch ($type) {
-            case 'week':
-                $from = $date->copy()->startOfWeek();
-                $to = $date->copy()->endOfWeek();
-                break;
-
             case 'month':
-                $from = $date->copy()->startOfMonth();
-                $to = $date->copy()->endOfMonth();
+                $query->whereMonth('date', date('m', strtotime($date)))
+                      ->whereYear('date', date('Y', strtotime($date)));
                 break;
-
+            case 'week':
+                $query->whereBetween('date', [
+                    date('Y-m-d', strtotime($date . ' -' . (date('N', strtotime($date)) - 1) . ' days')),
+                    date('Y-m-d', strtotime($date . ' +' . (7 - date('N', strtotime($date))) . ' days'))
+                ]);
+                break;
+            case 'day':
+                $query->whereDate('date', $date);
+                break;
             case 'semester':
-                // Semester 1: Jul–Dec, Semester 2: Jan–Jun
-                $month = $date->month;
-                if ($month >= 7 && $month <= 12) {
-                    $from = Carbon::create($date->year, 7, 1);
-                    $to = Carbon::create($date->year, 12, 31);
+            default:
+                $month = date('n', strtotime($date));
+                if ($month >= 1 && $month <= 6) {
+                    $query->whereBetween('date', [date('Y-01-01'), date('Y-06-30')]);
                 } else {
-                    $from = Carbon::create($date->year, 1, 1);
-                    $to = Carbon::create($date->year, 6, 30);
+                    $query->whereBetween('date', [date('Y-07-01'), date('Y-12-31')]);
                 }
                 break;
-
-            default: // type: day
-                $from = $date;
-                $to = $date;
         }
 
-        // Ambil dan kelompokkan data absensi per siswa
-        $summary = Attendance::whereBetween('date', [$from, $to])
-            ->with(['student', 'absenceReason'])
-            ->get()
-            ->groupBy('student_id')
-            ->map(function ($records, $studentId) {
-                return [
-                    'student_id' => $studentId,
-                    'name' => optional($records->first()->student)->name,
-                    'present' => $records->where('status', 'present')->count(),
-                    'absent' => $records->where('status', 'absent')->count(),
-                ];
-            })
-            ->values();
+        $data = $query->get();
 
-        return response()->json([
-            'from' => $from->toDateString(),
-            'to' => $to->toDateString(),
-            'summary' => $summary
-        ]);
+        return response()->json($data);
     }
 
     /**
-     * 👀 Detail absensi pada tanggal tertentu
+     * Lihat daftar kehadiran berdasarkan tanggal tertentu
+     * GET /api/teacher/attendance/2025-04-10
      */
     public function attendanceByDate($date)
     {
-        $data = Attendance::whereDate('date', $date)
-            ->with(['student', 'absenceReason'])
+        $attendance = Attendance::with(['student', 'absenceReason'])
+            ->whereDate('date', $date)
             ->get();
 
-        return response()->json([
-            'date' => $date,
-            'attendances' => $data,
-        ]);
+        return response()->json($attendance);
     }
 
     /**
-     * 📥 Export seluruh data absensi ke Excel
+     * Export data absensi ke Excel
+     * GET /api/teacher/export
      */
     public function exportExcel()
     {

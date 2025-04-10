@@ -2,27 +2,37 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\SecretaryController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TeacherController;
-use App\Http\Controllers\Api\AuthController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes - Aplikasi Absensi Sekolah
 |--------------------------------------------------------------------------
-| Endpoint-endpoint API untuk aplikasi absensi sekolah
 | Menggunakan Sanctum sebagai sistem autentikasi token-based
 |--------------------------------------------------------------------------
 */
 
-// 🔐 Cek user yang sedang login (berbasis token)
-Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
+// =====================================================
+// 🔓 Route Tanpa Autentikasi (Public)
+// =====================================================
+
+// 🔑 Login
+Route::post('/login', [AuthController::class, 'login']);
+
+// =====================================================
+// 🔐 Route Dengan Autentikasi Sanctum (Token)
+// =====================================================
+
+// 🔐 Cek user yang sedang login
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// 🔐 Logout dari sistem
-Route::middleware(['auth:sanctum'])->post('/logout', [AuthController::class, 'logout']);
+// 🔐 Logout
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 // =====================================================
 // ✅ Route untuk Sekretaris
@@ -31,20 +41,20 @@ Route::middleware(['auth:sanctum'])->post('/logout', [AuthController::class, 'lo
 // =====================================================
 Route::middleware(['auth:sanctum', 'role:secretary'])->prefix('secretary')->group(function () {
 
-    // 👩‍🏫 Manajemen Data Siswa
-    Route::get('/students', [SecretaryController::class, 'index']);               // Lihat semua siswa
-    Route::post('/students', [SecretaryController::class, 'store']);              // Tambah siswa
-    Route::put('/students/{student}', [SecretaryController::class, 'update']);    // Update siswa
+    // 👩‍🏫 Manajemen Siswa
+    Route::get('/students', [SecretaryController::class, 'index']);                // Lihat semua siswa
+    Route::post('/students', [SecretaryController::class, 'store']);               // Tambah siswa
+    Route::put('/students/{student}', [SecretaryController::class, 'update']);     // Update data siswa
     Route::delete('/students/{student}', [SecretaryController::class, 'destroy']); // Hapus siswa
 
     // 🗕️ Manajemen Absensi
-    Route::post('/mark-attendance', [SecretaryController::class, 'markAttendance']); // Tandai kehadiran
-    Route::post('/import-attendance', [SecretaryController::class, 'importAttendance']); // Import dari Excel
+    Route::post('/mark-attendance', [SecretaryController::class, 'markAttendance']);     // Tandai kehadiran siswa
+    Route::post('/import-attendance', [SecretaryController::class, 'importAttendance']); // Import absensi dari Excel
 
     // 📄 CRUD Alasan Ketidakhadiran
-    Route::get('/absence-reasons', [SecretaryController::class, 'allReasons']);           // Lihat semua alasan
-    Route::post('/absence-reasons', [SecretaryController::class, 'addReason']);           // Tambah alasan
-    Route::put('/absence-reasons/{reason}', [SecretaryController::class, 'updateReason']); // Update alasan
+    Route::get('/absence-reasons', [SecretaryController::class, 'allReasons']);               // Lihat semua alasan
+    Route::post('/absence-reasons', [SecretaryController::class, 'addReason']);               // Tambah alasan
+    Route::put('/absence-reasons/{reason}', [SecretaryController::class, 'updateReason']);    // Update alasan
     Route::delete('/absence-reasons/{reason}', [SecretaryController::class, 'deleteReason']); // Hapus alasan
 });
 
@@ -54,7 +64,8 @@ Route::middleware(['auth:sanctum', 'role:secretary'])->prefix('secretary')->grou
 // Prefix: /api/student
 // =====================================================
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group(function () {
-    // 👨‍🎓 Lihat histori kehadiran pribadi
+
+    // 👨‍🎓 Lihat histori absensi pribadi
     Route::get('/attendance', [StudentController::class, 'myAttendance']);
 });
 
@@ -65,12 +76,12 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group(fu
 // =====================================================
 Route::middleware(['auth:sanctum', 'role:teacher'])->prefix('teacher')->group(function () {
 
-    // 📊 Ringkasan Kehadiran (Semester, Bulan, Minggu)
-    Route::get('/summary', [TeacherController::class, 'summary']); // ?type=semester&date=2025-01-01
+    // 📊 Ringkasan Kehadiran (semester, bulan, minggu)
+    Route::get('/summary', [TeacherController::class, 'summary']); // Query: ?type=semester&date=2025-01-01
 
-    // 🗕️ Detail Kehadiran per Tanggal
-    Route::get('/attendance/{date}', [TeacherController::class, 'attendanceByDate']);
+    // 🗓️ Kehadiran berdasarkan tanggal
+    Route::get('/attendance/{date}', [TeacherController::class, 'attendanceByDate']); // YYYY-MM-DD
 
-    // 📤 Export ke Excel
+    // 📤 Export absensi ke Excel
     Route::get('/export', [TeacherController::class, 'exportExcel']);
 });
