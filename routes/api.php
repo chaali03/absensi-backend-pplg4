@@ -15,18 +15,17 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 Route::middleware(['auth:sanctum', 'role:secretary'])->prefix('secretary')->group(function () {
     Route::get('/students', [SecretaryController::class, 'index']); // Lihat semua siswa
     Route::post('/students', [SecretaryController::class, 'store']); // Tambah siswa
-    Route::put('/students/{id}', [SecretaryController::class, 'update']); // Edit siswa
-    Route::delete('/students/{id}', [SecretaryController::class, 'destroy']); // Hapus siswa
+    Route::put('/students/{student}', [SecretaryController::class, 'update']); // Edit siswa
+    Route::delete('/students/{student}', [SecretaryController::class, 'destroy']); // Hapus siswa
+
     Route::post('/mark-attendance', [SecretaryController::class, 'markAttendance']); // Tandai kehadiran
+    Route::post('/import-attendance', [SecretaryController::class, 'importAttendance']); // Import dari Excel
 
-    // ✅ Import data absensi via Excel
-    Route::post('/import-attendance', [SecretaryController::class, 'importAttendance']);
-
-    // ✅ CRUD Alasan Ketidakhadiran
-    Route::get('/absence-reasons', [SecretaryController::class, 'getReasons']); // Lihat semua alasan
-    Route::post('/absence-reasons', [SecretaryController::class, 'storeReason']); // Tambah alasan
-    Route::put('/absence-reasons/{id}', [SecretaryController::class, 'updateReason']); // Edit alasan
-    Route::delete('/absence-reasons/{id}', [SecretaryController::class, 'deleteReason']); // Hapus alasan
+    // ✅ CRUD alasan ketidakhadiran
+    Route::get('/absence-reasons', [SecretaryController::class, 'allReasons']); // Lihat semua alasan
+    Route::post('/absence-reasons', [SecretaryController::class, 'addReason']); // Tambah alasan
+    Route::put('/absence-reasons/{reason}', [SecretaryController::class, 'updateReason']); // Update alasan
+    Route::delete('/absence-reasons/{reason}', [SecretaryController::class, 'deleteReason']); // Hapus alasan
 });
 
 

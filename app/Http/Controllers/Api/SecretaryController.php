@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\Attendance;
+use App\Models\AbsenceReason;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\AttendanceImport;
 
@@ -77,5 +78,43 @@ class SecretaryController extends Controller
         Excel::import(new AttendanceImport, $request->file('file'));
 
         return response()->json(['message' => 'Data absensi berhasil diimpor.']);
+    }
+
+    // ✅ Tambah alasan ketidakhadiran
+    public function addReason(Request $request)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $reason = AbsenceReason::create($validated);
+
+        return response()->json($reason, 201);
+    }
+
+    // ✅ Lihat semua alasan ketidakhadiran
+    public function allReasons()
+    {
+        return response()->json(AbsenceReason::all());
+    }
+
+    // ✅ Update alasan ketidakhadiran
+    public function updateReason(Request $request, AbsenceReason $reason)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $reason->update($validated);
+
+        return response()->json($reason);
+    }
+
+    // ✅ Hapus alasan ketidakhadiran
+    public function deleteReason(AbsenceReason $reason)
+    {
+        $reason->delete();
+
+        return response()->json(['message' => 'Alasan ketidakhadiran dihapus.']);
     }
 }
