@@ -67,7 +67,7 @@ class SecretaryController extends Controller
         return response()->json($attendance);
     }
 
-    // ✅ Import absensi dari file Excel
+    // Import absensi dari file Excel
     public function importAttendance(Request $request)
     {
         $request->validate([
