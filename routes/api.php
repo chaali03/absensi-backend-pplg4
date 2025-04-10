@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SecretaryController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TeacherController;
+use App\Http\Controllers\Api\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,9 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// 🔐 Logout dari sistem
+Route::middleware(['auth:sanctum'])->post('/logout', [AuthController::class, 'logout']);
+
 // =====================================================
 // ✅ Route untuk Sekretaris
 // Role: secretary
@@ -33,7 +37,7 @@ Route::middleware(['auth:sanctum', 'role:secretary'])->prefix('secretary')->grou
     Route::put('/students/{student}', [SecretaryController::class, 'update']);    // Update siswa
     Route::delete('/students/{student}', [SecretaryController::class, 'destroy']); // Hapus siswa
 
-    // 📅 Manajemen Absensi
+    // 🗕️ Manajemen Absensi
     Route::post('/mark-attendance', [SecretaryController::class, 'markAttendance']); // Tandai kehadiran
     Route::post('/import-attendance', [SecretaryController::class, 'importAttendance']); // Import dari Excel
 
@@ -62,9 +66,9 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group(fu
 Route::middleware(['auth:sanctum', 'role:teacher'])->prefix('teacher')->group(function () {
 
     // 📊 Ringkasan Kehadiran (Semester, Bulan, Minggu)
-    Route::get('/summary', [TeacherController::class, 'summary']); // ?filter=semester&value=1
+    Route::get('/summary', [TeacherController::class, 'summary']); // ?type=semester&date=2025-01-01
 
-    // 📅 Detail Kehadiran per Tanggal
+    // 🗕️ Detail Kehadiran per Tanggal
     Route::get('/attendance/{date}', [TeacherController::class, 'attendanceByDate']);
 
     // 📤 Export ke Excel
