@@ -22,6 +22,7 @@ class Attendance extends Model
 
     /**
      * Relasi ke model Student
+     * Setiap kehadiran dimiliki oleh satu siswa
      */
     public function student()
     {
@@ -29,10 +30,11 @@ class Attendance extends Model
     }
 
     /**
-     * Relasi ke model AbsenceReason (nullable)
+     * Relasi ke model AbsenceReason
+     * Bisa null jika statusnya "hadir" tanpa alasan
      */
     public function absenceReason()
     {
-        return $this->belongsTo(AbsenceReason::class);
+        return $this->belongsTo(AbsenceReason::class, 'absence_reason_id');
     }
 }

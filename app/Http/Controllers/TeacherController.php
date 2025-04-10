@@ -1,43 +1,95 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
-use App\Models\Student;
-use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 use App\Exports\AttendanceExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TeacherController extends Controller
 {
-    // Ringkasan absensi semua siswa
-    public function summary()
+    /**
+     * 📊 Ringkasan kehadiran berdasarkan tipe: day, week, month, semester
+     */
+    public function summary(Request $request)
     {
-        $summary = DB::table('attendances')
-            ->select('student_id', DB::raw('count(*) as total'), DB::raw("sum(status = 'present') as hadir"), DB::raw("sum(status = 'absent') as tidak_hadir"))
-            ->groupBy('student_id')
-            ->get();
+        $type = $request->query('type', 'day'); // default: day
+        $date = Carbon::parse($request->query('date', now()));
 
-        return response()->json($summary);
+        // Hitung rentang waktu berdasarkan jenis summary
+        switch ($type) {
+            case 'week':
+                $from = $date->copy()->startOfWeek();
+                $to = $date->copy()->endOfWeek();
+                break;
+
+            case 'month':
+                $from = $date->copy()->startOfMonth();
+                $to = $date->copy()->endOfMonth();
+                break;
+
+            case 'semester':
+                $semester1Start = Carbon::create($date->year, 1, 1);
+                $semester2Start = Carbon::create($date->year, 7, 1);
+                if ($date->between($semester1Start, $semester2Start->copy()->subDay())) {
+                    $from = $semester1Start;
+                    $to = $semester2Start->copy()->subDay();
+                } else {
+                    $from = $semester2Start;
+                    $to = Carbon::create($date->year, 12, 31);
+                }
+                break;
+
+            default: // type: day
+                $from = $date;
+                $to = $date;
+        }
+
+        // Ambil dan kelompokkan data absensi per siswa
+        $summary = Attendance::whereBetween('date', [$from, $to])
+            ->with(['student', 'absenceReason'])
+            ->get()
+            ->groupBy('student_id')
+            ->map(function ($records, $studentId) {
+                return [
+                    'student_id' => $studentId,
+                    'name' => optional($records->first()->student)->name,
+                    'present' => $records->where('status', 'present')->count(),
+                    'absent' => $records->where('status', 'absent')->count(),
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'summary' => $summary
+        ]);
     }
 
-    // Melihat absensi semua siswa berdasarkan tanggal
+    /**
+     * 👀 Detail absensi pada tanggal tertentu
+     */
     public function attendanceByDate($date)
     {
-        $data = Attendance::with('student', 'reason')
-            ->where('date', $date)
+        $data = Attendance::whereDate('date', $date)
+            ->with(['student', 'absenceReason'])
             ->get();
 
         return response()->json([
             'date' => $date,
-            'attendances' => $data
+            'attendances' => $data,
         ]);
     }
 
-    // Export absensi ke Excel
-    public function exportExcel(Request $request)
+    /**
+     * 📥 Export seluruh data absensi ke Excel
+     */
+    public function exportExcel()
     {
-        return Excel::download(new AttendanceExport, 'attendance.xlsx');
+        return Excel::download(new AttendanceExport, 'rekap-absensi.xlsx');
     }
 }

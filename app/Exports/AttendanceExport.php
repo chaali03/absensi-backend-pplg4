@@ -10,20 +10,25 @@ class AttendanceExport implements FromCollection, WithHeadings
 {
     public function collection()
     {
-        return Attendance::with('student')
+        return Attendance::with(['student', 'absenceReason'])
             ->get()
             ->map(function ($attendance) {
                 return [
                     'Nama Siswa' => $attendance->student->name,
-                    'Tanggal' => $attendance->date,
-                    'Status' => $attendance->status,
-                    'Alasan' => $attendance->reason,
+                    'Tanggal' => $attendance->date->format('Y-m-d'),
+                    'Status' => ucfirst($attendance->status),
+                    'Alasan' => optional($attendance->absenceReason)->reason ?? '-',
                 ];
             });
     }
 
     public function headings(): array
     {
-        return ['Nama Siswa', 'Tanggal', 'Status', 'Alasan'];
+        return [
+            'Nama Siswa',
+            'Tanggal',
+            'Status',
+            'Alasan',
+        ];
     }
 }
