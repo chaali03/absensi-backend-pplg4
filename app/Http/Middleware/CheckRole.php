@@ -8,23 +8,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-    /**
-     * Handle an incoming request.
-     * 
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     * @param  string  $role
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
     public function handle(Request $request, Closure $next, string $role): Response
     {
-        // Jika user belum login
-        if (!$request->user()) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
-        }
+        // Mapping dari role bahasa Inggris ke role enum DB (bahasa Indonesia)
+        $roleMap = [
+            'secretary' => 'sekretaris',
+            'student' => 'siswa',
+            'teacher' => 'guru',
+        ];
 
-        // Jika role tidak sesuai
-        if ($request->user()->role !== $role) {
+        $userRole = $request->user()->role;
+        $expectedRole = $roleMap[$role] ?? $role;
+
+        if ($userRole !== $expectedRole) {
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
