@@ -21,7 +21,14 @@ Route::middleware(['auth:sanctum', 'role:secretary'])->prefix('secretary')->grou
 
     // ✅ Import data absensi via Excel
     Route::post('/import-attendance', [SecretaryController::class, 'importAttendance']);
+
+    // ✅ CRUD Alasan Ketidakhadiran
+    Route::get('/absence-reasons', [SecretaryController::class, 'getReasons']); // Lihat semua alasan
+    Route::post('/absence-reasons', [SecretaryController::class, 'storeReason']); // Tambah alasan
+    Route::put('/absence-reasons/{id}', [SecretaryController::class, 'updateReason']); // Edit alasan
+    Route::delete('/absence-reasons/{id}', [SecretaryController::class, 'deleteReason']); // Hapus alasan
 });
+
 
 
 // ✅ Group route untuk Student
