@@ -32,14 +32,14 @@ class TeacherController extends Controller
                 break;
 
             case 'semester':
-                $semester1Start = Carbon::create($date->year, 1, 1);
-                $semester2Start = Carbon::create($date->year, 7, 1);
-                if ($date->between($semester1Start, $semester2Start->copy()->subDay())) {
-                    $from = $semester1Start;
-                    $to = $semester2Start->copy()->subDay();
-                } else {
-                    $from = $semester2Start;
+                // Semester 1: Jul–Dec, Semester 2: Jan–Jun
+                $month = $date->month;
+                if ($month >= 7 && $month <= 12) {
+                    $from = Carbon::create($date->year, 7, 1);
                     $to = Carbon::create($date->year, 12, 31);
+                } else {
+                    $from = Carbon::create($date->year, 1, 1);
+                    $to = Carbon::create($date->year, 6, 30);
                 }
                 break;
 
