@@ -7,20 +7,20 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Jalankan migrasi untuk membuat tabel 'absence_reasons'.
      */
     public function up(): void
     {
         Schema::create('absence_reasons', function (Blueprint $table) {
-            $table->id();
-            $table->string('reason')->unique(); // Contoh: Sakit, Izin, Tanpa Keterangan
-            $table->text('description')->nullable(); // Penjelasan tambahan jika diperlukan
-            $table->timestamps();
+            $table->id(); // Primary key
+            $table->string('reason')->unique(); // Nama alasan unik, contoh: Sakit, Izin
+            $table->text('description')->nullable(); // Penjelasan tambahan, opsional
+            $table->timestamps(); // Kolom created_at & updated_at
         });
     }
 
     /**
-     * Reverse the migrations.
+     * Undo migrasi, hapus tabel 'absence_reasons'.
      */
     public function down(): void
     {
