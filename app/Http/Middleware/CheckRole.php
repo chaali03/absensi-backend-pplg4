@@ -10,17 +10,7 @@ class CheckRole
 {
     public function handle(Request $request, Closure $next, string $role): Response
     {
-        // Mapping dari role bahasa Inggris ke role enum DB (bahasa Indonesia)
-        $roleMap = [
-            'secretary' => 'sekretaris',
-            'student' => 'siswa',
-            'teacher' => 'guru',
-        ];
-
-        $userRole = $request->user()->role;
-        $expectedRole = $roleMap[$role] ?? $role;
-
-        if ($userRole !== $expectedRole) {
+        if ($request->user()?->role !== $role) {
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 

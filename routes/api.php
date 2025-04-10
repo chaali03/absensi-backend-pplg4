@@ -11,76 +11,46 @@ use App\Http\Controllers\Api\TeacherController;
 |--------------------------------------------------------------------------
 | API Routes - Aplikasi Absensi Sekolah
 |--------------------------------------------------------------------------
-| Autentikasi token-based menggunakan Sanctum
-| Role yang didukung: sekretaris, siswa, wali kelas
+| Role: sekretaris, siswa, wali_kelas
 |--------------------------------------------------------------------------
 */
 
-// =====================================================
-// 🔓 Route Tanpa Autentikasi (Public)
-// =====================================================
-
-// 🔑 Login
+// 🔓 Login
 Route::post('/login', [AuthController::class, 'login']);
 
-
-// =====================================================
-// 🔐 Route Dengan Autentikasi Sanctum (Token Required)
-// =====================================================
-
+// 🔐 Autentikasi Umum
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', fn(Request $request) => response()->json([
+        'authenticated' => true,
+        'user' => $request->user()
+    ]));
 
-    // 🔍 Cek info user yang sedang login
-    Route::get('/me', function (Request $request) {
-        return response()->json([
-            'authenticated' => true,
-            'user' => $request->user()
-        ]);
-    });
-
-    // 🔐 Logout
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-// =====================================================
-// ✅ Route untuk Sekretaris
-// URL: /api/secretary/*
-// Role: secretary
-// =====================================================
-Route::middleware(['auth:sanctum', 'role:secretary'])->prefix('secretary')->group(function () {
-
-    // 👩‍🏫 Manajemen Siswa
+// ✅ Sekretaris
+Route::middleware(['auth:sanctum', 'role:sekretaris'])->prefix('secretary')->group(function () {
     Route::get('/students', [SecretaryController::class, 'index']);
     Route::post('/students', [SecretaryController::class, 'store']);
     Route::put('/students/{student}', [SecretaryController::class, 'update']);
     Route::delete('/students/{student}', [SecretaryController::class, 'destroy']);
 
-    // 🗓️ Manajemen Absensi
     Route::post('/mark-attendance', [SecretaryController::class, 'markAttendance']);
     Route::post('/import-attendance', [SecretaryController::class, 'importAttendance']);
 
-    // ❌ CRUD Alasan Ketidakhadiran
     Route::get('/absence-reasons', [SecretaryController::class, 'allReasons']);
     Route::post('/absence-reasons', [SecretaryController::class, 'addReason']);
     Route::put('/absence-reasons/{reason}', [SecretaryController::class, 'updateReason']);
     Route::delete('/absence-reasons/{reason}', [SecretaryController::class, 'deleteReason']);
 });
 
-// =====================================================
-// ✅ Route untuk Siswa
-// URL: /api/student/*
-// Role: student
-// =====================================================
-Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group(function () {
+// ✅ Siswa
+Route::middleware(['auth:sanctum', 'role:siswa'])->prefix('student')->group(function () {
     Route::get('/attendance', [StudentController::class, 'myAttendance']);
 });
 
-// =====================================================
-// ✅ Route untuk Wali Kelas
-// URL: /api/teacher/*
-// Role: teacher
-// =====================================================
-Route::middleware(['auth:sanctum', 'role:teacher'])->prefix('teacher')->group(function () {
+// ✅ Wali Kelas
+Route::middleware(['auth:sanctum', 'role:wali_kelas'])->prefix('teacher')->group(function () {
     Route::get('/summary', [TeacherController::class, 'summary']);
     Route::get('/attendance/{date}', [TeacherController::class, 'attendanceByDate']);
     Route::get('/export', [TeacherController::class, 'exportExcel']);
