@@ -6,26 +6,16 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\SecretaryController;
 use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\StudentController;
-use App\Http\Controllers\Api\DashboardController;
-use Spatie\Permission\Models\Role;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
-
-// 🔐 Auth routes
+// 🔐 Auth Routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::post('/register', [AuthController::class, 'register']);
 
-
-// 🛡 Route yang butuh token Sanctum
+// 🔒 Protected Routes (Sanctum Required)
 Route::middleware('auth:sanctum')->group(function () {
 
-    // Info user login & role
+    // ℹ️ Info User
     Route::get('/me', function (Request $request) {
         return response()->json([
             'user' => $request->user(),
@@ -33,24 +23,24 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
     });
 
-    // Logout
+    // 🚪 Logout
     Route::post('/logout', function (Request $request) {
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Logout berhasil']);
     });
 
-    // 🛡 Sekretaris Routes
-    Route::middleware('role:sekretaris')->prefix('sekretaris')->group(function () {
 
+    // 🧑‍💼 Sekretaris Routes
+    Route::middleware('role:sekretaris')->prefix('sekretaris')->group(function () {
         Route::get('/dashboard', fn () => response()->json(['message' => 'Halo Sekretaris!']));
 
-        // 📋 CRUD Siswa
+        // 👥 CRUD Siswa
         Route::get('/siswa', [SecretaryController::class, 'index']);
         Route::post('/siswa', [SecretaryController::class, 'store']);
         Route::put('/siswa/{student}', [SecretaryController::class, 'update']);
         Route::delete('/siswa/{student}', [SecretaryController::class, 'destroy']);
 
-        // 🗓 Absensi
+        // 🗓️ Absensi
         Route::post('/absensi', [SecretaryController::class, 'markAttendance']);
         Route::post('/absensi/import', [SecretaryController::class, 'importAttendance']);
 
@@ -61,9 +51,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/alasan/{reason}', [SecretaryController::class, 'deleteReason']);
     });
 
+
     // 👨‍🏫 Wali Kelas Routes
     Route::middleware('role:wali_kelas')->prefix('wali-kelas')->group(function () {
-
         Route::get('/dashboard', fn () => response()->json(['message' => 'Halo Wali Kelas!']));
 
         // 📊 Ringkasan Absensi
@@ -72,25 +62,27 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/absensi/export', [TeacherController::class, 'exportToExcel']);
     });
 
+
     // 👩‍🎓 Siswa Routes
     Route::middleware('role:siswa')->prefix('siswa')->group(function () {
-
         Route::get('/dashboard', fn () => response()->json(['message' => 'Halo Siswa!']));
 
         // 📖 Riwayat Absensi
         Route::get('/absensi/riwayat', [StudentController::class, 'attendanceHistory']);
     });
+
 });
 
-// 🔁 Fallback kalau route tidak ditemukan
+
+// 🧪 Testing / Demo Routes (opsional, bisa dihapus di production)
+Route::middleware(['auth:sanctum', 'role:sekretaris'])->get('/tes-sekretaris', fn () => response()->json(['message' => 'Sekretaris bisa akses!']));
+Route::middleware(['auth:sanctum', 'role:wali_kelas'])->get('/tes-wali', fn () => response()->json(['message' => 'Wali Kelas bisa akses!']));
+Route::middleware(['auth:sanctum', 'role:siswa'])->get('/tes-siswa', fn () => response()->json(['message' => 'Siswa bisa akses!']));
+
+
+// 🛑 Fallback jika route tidak ditemukan
 Route::fallback(function () {
     return response()->json([
         'message' => 'Endpoint tidak ditemukan atau tidak memiliki izin akses.'
     ], 404);
-});
-
-Route::get('/dashboard', fn () => response()->json(['message' => 'Halo Sekretaris!']));
-
-Route::middleware(['auth:sanctum', 'role:sekretaris'])->get('/tes-role', function () {
-    return response()->json(['message' => 'Sekretaris bisa akses!']);
 });

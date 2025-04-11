@@ -13,12 +13,13 @@ class SecretaryController extends Controller
 {
 
     public function dashboard()
-{
-    return response()->json([
-        'success' => true,
-        'message' => 'Dashboard sekretaris berhasil diakses.',
-    ]);
-}
+    {
+        if (auth()->user()->hasRole('sekretaris')) {
+            return response()->json(['message' => 'Ini dashboard sekretaris']);
+        }
+
+        return response()->json(['message' => 'Akses ditolak'], 403);
+    }
 
     public function __construct()
     {

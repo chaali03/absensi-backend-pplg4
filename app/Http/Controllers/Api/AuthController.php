@@ -40,35 +40,6 @@ class AuthController extends Controller
         ]);
     }
 
-    // 📝 Registrasi
-
-    public function register(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'role' => 'required|in:sekretaris,siswa,wali_kelas',
-        ]);
-    
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-    
-        $user->assignRole($request->role);
-    
-        $token = $user->createToken('API Token')->plainTextToken;
-    
-        return response()->json([
-            'message' => 'Registrasi berhasil',
-            'token' => $token,
-            'user' => $user,
-            'role' => $request->role
-        ]);
-    }
-
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
