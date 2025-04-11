@@ -3,15 +3,14 @@
 namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Permission\Traits\HasRoles; // ✅ Tambahkan ini!
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles; // ✅ Tambahkan HasRoles
 
     protected $fillable = [
         'name',
@@ -29,18 +28,37 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    // ✅ Tambahkan ini di dalam class User
+    public static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($user) {
+            if ($user->role && ! $user->hasRole($user->role)) {
+                $user->assignRole($user->role);
+            }
+        });
+
+        static::updated(function ($user) {
+            if ($user->isDirty('role')) {
+                $user->syncRoles($user->role);
+            }
+        });
+    }
+
+    // Helper untuk cek role
     public function isSecretary(): bool
     {
-        return $this->role === 'sekretaris';
+        return $this->hasRole('sekretaris');
     }
 
     public function isHomeroomTeacher(): bool
     {
-        return $this->role === 'wali_kelas';
+        return $this->hasRole('wali_kelas');
     }
 
     public function isStudent(): bool
     {
-        return $this->role === 'siswa';
+        return $this->hasRole('siswa');
     }
 }

@@ -1,24 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Models;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Attendance;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class StudentController extends Controller
+class Student extends Model
 {
-    public function myAttendance()
-    {
-        $studentId = Auth::user()->student_id; // Pastikan user punya relasi ke tabel students
+    use HasFactory;
 
-        $attendance = Attendance::with('absenceReason')
-            ->where('student_id', $studentId)
-            ->orderBy('date', 'desc')
-            ->get();
-
-        return response()->json($attendance);
-    }
+    protected $fillable = [
+        'name',
+        'nis',
+        'status',
+    ];
 }
-

@@ -3,8 +3,5 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return response()->json(['Laravel' => app()->version()]);
+    return response()->json(['message' => 'API is working']);
 });
-
-// Opsi tambahan kalau kamu nanti pakai Laravel Breeze atau Fortify
-// require __DIR__.'/auth.php';

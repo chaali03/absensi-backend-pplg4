@@ -11,13 +11,51 @@ use Illuminate\Support\Facades\Validator;
 
 class SecretaryController extends Controller
 {
+
+    public function dashboard()
+{
+    return response()->json([
+        'success' => true,
+        'message' => 'Dashboard sekretaris berhasil diakses.',
+    ]);
+}
+
+    public function __construct()
+    {
+        $this->middleware(['auth:sanctum', 'role:sekretaris']);
+    }
+
     // ============================
     // 👩‍🏫 Manajemen Siswa
     // ============================
 
     public function index()
     {
-        return response()->json(Student::all());
+        try {
+            $students = Student::all();
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Daftar siswa berhasil diambil.',
+                'data' => $students
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Gagal ambil siswa: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan di server.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function show(Student $student)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Data siswa berhasil ditemukan.',
+            'data' => $student
+        ]);
     }
 
     public function store(Request $request)
@@ -27,14 +65,15 @@ class SecretaryController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         $student = Student::create($request->only('name'));
 
         return response()->json([
+            'success' => true,
             'message' => 'Siswa berhasil ditambahkan',
-            'student' => $student
+            'data' => $student
         ]);
     }
 
@@ -45,18 +84,18 @@ class SecretaryController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         $student->update($request->only('name'));
 
-        return response()->json(['message' => 'Siswa berhasil diperbarui']);
+        return response()->json(['success' => true, 'message' => 'Siswa berhasil diperbarui']);
     }
 
     public function destroy(Student $student)
     {
         $student->delete();
-        return response()->json(['message' => 'Siswa berhasil dihapus']);
+        return response()->json(['success' => true, 'message' => 'Siswa berhasil dihapus']);
     }
 
     // ============================
@@ -74,7 +113,7 @@ class SecretaryController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         foreach ($request->records as $record) {
@@ -87,13 +126,16 @@ class SecretaryController extends Controller
             );
         }
 
-        return response()->json(['message' => 'Absensi berhasil ditandai']);
+        return response()->json(['success' => true, 'message' => 'Absensi berhasil ditandai']);
     }
 
     public function importAttendance(Request $request)
     {
-        // Dianggap sudah di-handle di tempat lain
-        return response()->json(['message' => 'Impor absensi berhasil']);
+        // Misalnya kamu handle Excel upload di tempat lain
+        return response()->json([
+            'success' => true,
+            'message' => 'Impor absensi berhasil (mock response).'
+        ]);
     }
 
     // ============================
@@ -102,7 +144,12 @@ class SecretaryController extends Controller
 
     public function allReasons()
     {
-        return response()->json(AbsenceReason::all());
+        $reasons = AbsenceReason::all();
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar alasan berhasil diambil.',
+            'data' => $reasons
+        ]);
     }
 
     public function addReason(Request $request)
@@ -112,14 +159,15 @@ class SecretaryController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         $reason = AbsenceReason::create($request->only('reason'));
 
         return response()->json([
+            'success' => true,
             'message' => 'Alasan berhasil ditambahkan',
-            'reason' => $reason
+            'data' => $reason
         ]);
     }
 
@@ -130,17 +178,17 @@ class SecretaryController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         $reason->update($request->only('reason'));
 
-        return response()->json(['message' => 'Alasan berhasil diperbarui']);
+        return response()->json(['success' => true, 'message' => 'Alasan berhasil diperbarui']);
     }
 
     public function deleteReason(AbsenceReason $reason)
     {
         $reason->delete();
-        return response()->json(['message' => 'Alasan berhasil dihapus']);
+        return response()->json(['success' => true, 'message' => 'Alasan berhasil dihapus']);
     }
 }

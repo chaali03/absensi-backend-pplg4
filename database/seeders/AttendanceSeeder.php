@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Student;
 use App\Models\Attendance;
+use App\Models\Student;
 use App\Models\AbsenceReason;
 use Carbon\Carbon;
 
@@ -12,35 +12,22 @@ class AttendanceSeeder extends Seeder
 {
     public function run(): void
     {
-        $students = Student::all();
-        $absenceReasons = AbsenceReason::all();
+        $student = Student::first(); // contoh untuk 1 siswa
+        $reason = AbsenceReason::where('reason', 'Izin')->first();
 
-        // Set tanggal awal dan akhir (misalnya seminggu terakhir)
-        $startDate = Carbon::now()->subDays(7);
-        $endDate = Carbon::now();
+        $data = [
+            ['date' => '2025-04-03', 'status' => 'izin', 'reason_id' => $reason->id],
+            ['date' => '2025-04-04', 'status' => 'hadir', 'reason_id' => null],
+        ];
 
-        foreach ($students as $student) {
-            $date = $startDate->copy();
-
-            while ($date <= $endDate) {
-                // Random status
-                $status = collect(['hadir', 'sakit', 'izin', 'alfa'])->random();
-
-                // Isi reason hanya kalau bukan "hadir"
-                $absenceReasonId = null;
-                if ($status !== 'hadir') {
-                    $absenceReasonId = $absenceReasons->random()->id;
-                }
-
-                Attendance::create([
-                    'student_id' => $student->id,
-                    'date' => $date->format('Y-m-d'),
-                    'status' => $status,
-                    'absence_reason_id' => $absenceReasonId,
-                ]);
-
-                $date->addDay();
-            }
+        foreach ($data as $entry) {
+            Attendance::updateOrCreate(
+                ['student_id' => $student->id, 'date' => Carbon::parse($entry['date'])->toDateString()],
+                [
+                    'status' => $entry['status'],
+                    'absence_reason_id' => $entry['reason_id']
+                ]
+            );
         }
     }
 }

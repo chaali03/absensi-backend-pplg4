@@ -1,7 +1,5 @@
 <?php
 
-// database/seeders/AbsenceReasonSeeder.php
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -13,12 +11,15 @@ class AbsenceReasonSeeder extends Seeder
     {
         $reasons = [
             ['reason' => 'Sakit', 'description' => 'Ketidakhadiran karena alasan kesehatan'],
-            ['reason' => 'Izin', 'description' => 'Izin resmi dari orang tua atau wali'],
-            ['reason' => 'Tanpa Keterangan', 'description' => 'Tidak hadir tanpa alasan yang jelas (alfa)'],
+            ['reason' => 'Izin', 'description' => 'Ketidakhadiran dengan izin resmi'],
+            ['reason' => 'Alpha', 'description' => 'Tidak hadir tanpa keterangan'],
         ];
 
         foreach ($reasons as $data) {
-            AbsenceReason::create($data);
+            AbsenceReason::updateOrCreate(
+                ['reason' => $data['reason']],
+                ['description' => $data['description']]
+            );
         }
     }
 }
